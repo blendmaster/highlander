@@ -23,7 +23,7 @@ func main() {
 	b := img.Bounds()
 
 	for y := b.Min.Y; y < b.Max.Y; y++ {
-		for x:= b.Min.X; x < b.Max.X; x++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
 			fmt.Println(img.At(x, y))
 		}
 	}
