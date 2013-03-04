@@ -9,8 +9,10 @@ import (
 	"fmt"
 	//"image"
 	"image/png"
+	"image/color"
 	//"io"
 	"os"
+	"highlander/prominence"
 )
 
 func main() {
@@ -24,7 +26,9 @@ func main() {
 
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		for x := b.Min.X; x < b.Max.X; x++ {
-			fmt.Println(img.At(x, y))
+			fmt.Println(img.At(x, y).(color.Gray16).Y)
 		}
 	}
+
+	fmt.Println(prominence.ProminentFeatures(img))
 }
