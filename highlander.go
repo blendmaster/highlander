@@ -8,11 +8,11 @@ package main
 import (
 	"fmt"
 	//"image"
-	"image/png"
 	"image/color"
+	"image/png"
 	//"io"
-	"os"
 	"highlander/prominence"
+	"os"
 )
 
 func main() {

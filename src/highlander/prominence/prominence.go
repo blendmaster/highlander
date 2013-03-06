@@ -17,9 +17,9 @@ const (
 
 // A topologic Saddle or Peak at a certain position.
 type Feature struct {
-	X, Y int
-  Height uint16
-	Type FeatureType
+	X, Y   int
+	Height uint16
+	Type   FeatureType
 }
 
 // The prominent topologic features of a heightmap (as an Image).
