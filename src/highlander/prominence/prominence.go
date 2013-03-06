@@ -10,28 +10,8 @@ import (
 	"image"
 	"image/color"
 	"sort"
+  "fmt"
 )
-
-type FeatureType int
-
-const (
-	Saddle FeatureType = iota
-	Peak
-)
-
-// A topologic Saddle or Peak at a certain position.
-type Feature struct {
-	X, Y       int
-	Prominence int
-	Height     uint16
-	Type       FeatureType
-}
-
-// Each height reading from the input image
-type Pixel struct {
-	X, Y   int
-	Height uint16
-}
 
 // I really don't get go's sorting API
 type Pixels []Pixel
@@ -54,7 +34,7 @@ func (p Descending) Less(i, j int) bool {
 	return a.Y < b.Y
 }
 
-// In decreasing order, the pixels from the Gray16 Image.
+// In decreasing order by height, the pixels from the Gray16 Image.
 func sortedPixels(heightmap image.Image) []Pixel {
 	b := heightmap.Bounds()
 	size := b.Dx() * b.Dy()
@@ -64,7 +44,9 @@ func sortedPixels(heightmap image.Image) []Pixel {
 	i := 0
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		for x := b.Min.X; x < b.Max.X; x++ {
-			sorted[i] = Pixel{x, y, heightmap.At(x, y).(color.Gray16).Y}
+      // XXX explicit type assertion as color.Gray16, to be able to get
+      // a number out of a color
+      sorted[i] = Pixel{x, y, heightmap.At(x, y).(color.Gray16).Y}
 			i++
 		}
 	}
@@ -76,6 +58,13 @@ func sortedPixels(heightmap image.Image) []Pixel {
 // The prominent topologic features of a heightmap (as an Image).
 // `threshold` controls which features will be returned.
 func ProminentFeatures(heightmap image.Image, threshold int) []Feature {
+  _ = fmt.Println
+  pixels := sortedPixels(heightmap)
+  features := make([]Feature, len(pixels))
+  for i, p := range(pixels) {
+    // TODO stuff
+    features[i] = Feature{p.X, p.Y, 0, p.Height, Peak}
+  }
 
-	return []Feature{{0, 0, 0, 0, Peak}}
+	return features
 }
