@@ -22,7 +22,6 @@ func main() {
 		log.Fatalln("Couldn't read png image from Stdin!", err)
 	}
 
-	b := img.Bounds()
 
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		for x := b.Min.X; x < b.Max.X; x++ {
