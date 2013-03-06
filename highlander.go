@@ -7,6 +7,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	//"image"
 	"image/color"
 	"image/png"
@@ -18,8 +19,7 @@ import (
 func main() {
 	img, err := png.Decode(os.Stdin)
 	if err != nil {
-		fmt.Println("Can't read that!", err)
-		return
+		log.Fatalln("Couldn't read png image from Stdin!", err)
 	}
 
 	b := img.Bounds()
