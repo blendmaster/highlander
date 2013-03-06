@@ -30,5 +30,6 @@ func main() {
 		}
 	}
 
-	fmt.Println(prominence.ProminentFeatures(img))
+	// TODO pass threshold and image as command line args
+	fmt.Println(prominence.ProminentFeatures(img), 10)
 }

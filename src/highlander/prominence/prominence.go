@@ -17,12 +17,14 @@ const (
 
 // A topologic Saddle or Peak at a certain position.
 type Feature struct {
-	X, Y   int
-	Height uint16
-	Type   FeatureType
+	X, Y       int
+	Prominence int
+	Height     uint16
+	Type       FeatureType
 }
 
 // The prominent topologic features of a heightmap (as an Image).
-func ProminentFeatures(heightmap image.Image) []Feature {
-	return []Feature{{0, 0, 0, Peak}}
+// `threshold` controls which features will be returned.
+func ProminentFeatures(heightmap image.Image, threshold int) []Feature {
+	return []Feature{{0, 0, 0, 0, Peak}}
 }
