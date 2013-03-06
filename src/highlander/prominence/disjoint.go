@@ -2,7 +2,7 @@
 package prominence
 
 type Island struct {
-  Pixel Pixel
+  HighestPeak *Feature
   Parent *Island
 }
 
@@ -16,7 +16,10 @@ func Find(island *Island) *Island {
   if island.Parent == island {
     return island
   }
+
+  // compact
   island.Parent = Find(island.Parent)
+
   return island.Parent
 }
 

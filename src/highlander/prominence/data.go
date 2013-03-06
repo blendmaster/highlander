@@ -11,7 +11,7 @@ const (
 // A topologic Saddle or Peak at a certain position.
 type Feature struct {
 	X, Y       int
-	Prominence int
+	Prominence uint16
 	Height     uint16
 	Type       FeatureType
 }
@@ -21,3 +21,6 @@ type Pixel struct {
 	X, Y   int
 	Height uint16
 }
+
+// for lookup into a hash table
+type Location struct{ X, Y int }

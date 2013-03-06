@@ -22,5 +22,8 @@ func main() {
 	}
 
 	// TODO pass threshold and image as command line args
-	fmt.Println(prominence.ProminentFeatures(img, 10))
+	features := prominence.ProminentFeatures(img, 8000)
+	for e := features.Front(); e != nil; e = e.Next() {
+		fmt.Println(e.Value)
+	}
 }
