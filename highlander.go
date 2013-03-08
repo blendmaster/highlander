@@ -6,7 +6,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	//"image"
 	"image/png"
@@ -22,14 +21,12 @@ func main() {
 	flag.UintVar(&threshold, "threshold", 8000, "threshold of prominence for output features")
 	flag.Parse()
 
+	log.Println("reading image from stdin...")
 	img, err := png.Decode(os.Stdin)
 	if err != nil {
 		log.Fatalln("Couldn't read png image from Stdin!", err)
 	}
+	log.Println("read image!")
 
-	// TODO pass threshold and image as command line args
-	features := prominence.ProminentFeatures(img, uint16(threshold))
-	for e := features.Front(); e != nil; e = e.Next() {
-		fmt.Println(e.Value)
-	}
+	prominence.PrintProminentFeatures(img, uint16(threshold))
 }

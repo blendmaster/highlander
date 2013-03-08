@@ -7,15 +7,15 @@
 package prominence
 
 import (
-	"container/list"
 	"image"
 	"image/color"
 	"sort"
   "log"
+  "fmt"
 )
 
 // I really don't get go's sorting API
-type Pixels []Pixel
+type Pixels []*Pixel
 
 func (p Pixels) Len() int      { return len(p) }
 func (p Pixels) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
@@ -37,18 +37,18 @@ func (p Descending) Less(i, j int) bool {
 
 // the sorted pixels (Descending) as well as a map from Locations to pixels
 // from the image
-func pixelsOf(heightmap image.Image) []Pixel {
+func pixelsOf(heightmap image.Image) []*Pixel {
 	b := heightmap.Bounds()
 	size := b.Dx() * b.Dy()
 
-	sorted := make([]Pixel, size)
+	sorted := make([]*Pixel, size)
 
 	i := 0
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		for x := b.Min.X; x < b.Max.X; x++ {
 			// XXX explicit type assertion as color.Gray16, to be able to get
 			// a number out of a color
-			p := Pixel{x, y, heightmap.At(x, y).(color.Gray16).Y}
+			p := &Pixel{x, y, heightmap.At(x, y).(color.Gray16).Y}
 			sorted[i] = p
 			i++
 		}
@@ -69,24 +69,24 @@ func gth(a *Feature, b *Feature) bool {
 	return a.Y < b.Y
 }
 
-// The prominent topologic features of a heightmap (as an Image).
+// Print the prominent topologic features of a heightmap (as an Image).
 // `threshold` controls which features will be returned.
-func ProminentFeatures(heightmap image.Image, threshold uint16) *list.List {
+func PrintProminentFeatures(heightmap image.Image, threshold uint16) {
   log.Println("sorting pixels")
 	pixels := pixelsOf(heightmap)
   log.Println("pixels sorted!")
 
 	aboveWater := make(map[Location]*Island)
 
-	features := list.New()
+  // since the list of features isn't stored but println'd when the prominence
+  // is determined, output the absolute highest feature now, since its
+  // prominence never changes
+  fmt.Println(&Feature{pixels[0].X, pixels[0].Y, 65535, pixels[0].Height, Peak})
 
 	for i, p := range pixels {
     if i % 1000000 == 0 {
       log.Println("on pixel", i)
     }
-
-		island := NewIsland()
-		aboveWater[Location{p.X, p.Y}] = island
 
 		// lookup 4 connected pixels
 		n, foundN := aboveWater[Location{p.X, p.Y - 1}]
@@ -113,12 +113,13 @@ func ProminentFeatures(heightmap image.Image, threshold uint16) *list.List {
 		switch len(connected) {
 		case 0:
 			// new Peak
+      island := NewIsland()
+      aboveWater[Location{p.X, p.Y}] = island
 			island.HighestPeak = &Feature{p.X, p.Y, 65535, p.Height, Peak}
-			features.PushBack(island.HighestPeak)
 		case 1:
 			// simple merge, loop only runs once
 			for land := range connected {
-				Union(island, land)
+        aboveWater[Location{p.X, p.Y}] = land
 			}
 		default:
 			// 2 or more unconnected islands
@@ -144,27 +145,20 @@ func ProminentFeatures(heightmap image.Image, threshold uint16) *list.List {
 			for land := range connected {
 				if land.HighestPeak != highest {
 					land.HighestPeak.Prominence = land.HighestPeak.Height - p.Height
+          if land.HighestPeak.Prominence > threshold {
+            fmt.Println(land.HighestPeak)
+          }
 					Union(land, highestLand)
 				}
 			}
 
-			// _this_ pixel 
-			island.HighestPeak = highest
-			Union(island, highestLand)
+      aboveWater[Location{p.X, p.Y}] = highestLand
 
-			features.PushBack(saddle)
+      if saddle.Prominence > threshold {
+        fmt.Println(saddle)
+      }
 		}
 	}
 
-  log.Println("All features found, thresholding...")
-
-	thresholded := list.New()
-	// filter out features not meeting the threshold
-	for e := features.Front(); e != nil; e = e.Next() {
-		if e.Value.(*Feature).Prominence > threshold {
-			thresholded.PushBack(e.Value)
-		}
-	}
-
-	return thresholded
+  log.Println("All features found!")
 }
