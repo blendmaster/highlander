@@ -58,6 +58,17 @@ func pixelsOf(heightmap image.Image) []Pixel {
 	return sorted
 }
 
+// greater height, with same position-based tiebreaker as pixel sorting to
+// prevent strange things (from happening to me)
+func gth(a *Feature, b *Feature) bool {
+  if a.Height != b.Height {
+    return a.Height > b.Height
+  } else if a.X != b.X {
+    return a.X < b.X
+  }
+  return a.Y < b.Y
+}
+
 // The prominent topologic features of a heightmap (as an Image).
 // `threshold` controls which features will be returned.
 func ProminentFeatures(heightmap image.Image, threshold uint16) *list.List {
@@ -124,7 +135,7 @@ func ProminentFeatures(heightmap image.Image, threshold uint16) *list.List {
 			switch {
 			case foundN || foundE:
 				if foundN && foundE {
-					if n.HighestPeak.Height > e.HighestPeak.Height {
+					if gth(n.HighestPeak, e.HighestPeak) {
 						hNE = n.HighestPeak
 						sNE = e.HighestPeak
 					} else {
@@ -141,7 +152,7 @@ func ProminentFeatures(heightmap image.Image, threshold uint16) *list.List {
 				}
 			case foundS || foundW:
 				if foundS && foundW {
-					if s.HighestPeak.Height > w.HighestPeak.Height {
+					if gth(s.HighestPeak, w.HighestPeak) {
 						hSW = s.HighestPeak
 						sSW = w.HighestPeak
 					} else {
@@ -160,17 +171,17 @@ func ProminentFeatures(heightmap image.Image, threshold uint16) *list.List {
 
 			switch {
 			case hNE != nil && hSW != nil:
-				if hNE.Height > hSW.Height {
+				if gth(hNE, hSW) {
           highest = hNE
 					secondHighest = hSW
 				} else {
           highest = hSW
 					secondHighest = hNE
 				}
-				if sNE != nil && sNE.Height > secondHighest.Height {
+				if sNE != nil && gth(sNE, secondHighest) {
 					secondHighest = sNE
 				}
-				if sSW !=nil && sSW.Height > secondHighest.Height {
+				if sSW !=nil && gth(sSW, secondHighest) {
 					secondHighest = sSW
 				}
 
@@ -195,7 +206,7 @@ func ProminentFeatures(heightmap image.Image, threshold uint16) *list.List {
       default: 
         switch {
         case foundN && foundS:
-          if n.HighestPeak.Height > s.HighestPeak.Height {
+          if gth(n.HighestPeak, s.HighestPeak) {
             highest = n.HighestPeak
             secondHighest = s.HighestPeak
           } else {
@@ -203,7 +214,7 @@ func ProminentFeatures(heightmap image.Image, threshold uint16) *list.List {
             secondHighest = n.HighestPeak
           }
         case foundN && foundW:
-          if n.HighestPeak.Height > w.HighestPeak.Height {
+          if gth(n.HighestPeak, w.HighestPeak) {
             highest = n.HighestPeak
             secondHighest = w.HighestPeak
           } else {
@@ -211,7 +222,7 @@ func ProminentFeatures(heightmap image.Image, threshold uint16) *list.List {
             secondHighest = n.HighestPeak
           }
         case foundE && foundS:
-          if e.HighestPeak.Height > s.HighestPeak.Height {
+          if gth(e.HighestPeak, s.HighestPeak) {
             highest = e.HighestPeak
             secondHighest = s.HighestPeak
           } else {
@@ -219,7 +230,7 @@ func ProminentFeatures(heightmap image.Image, threshold uint16) *list.List {
             secondHighest = e.HighestPeak
           }
         case foundE && foundW: // must be true
-          if e.HighestPeak.Height > w.HighestPeak.Height {
+          if gth(e.HighestPeak, w.HighestPeak) {
             highest = e.HighestPeak
             secondHighest = w.HighestPeak
           } else {
