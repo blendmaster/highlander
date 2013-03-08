@@ -106,6 +106,49 @@ func nonNilIslands(a, b, c, d *Island) (w, x, y, z *Island) {
   return a, b, c, d
 }
 
+// a, nil if a and b are the same land mass. a, b MUST be non-nil
+func uniqueIslands(a, b *Island) (w, x *Island) {
+  if Find(a) == Find(b) {
+    return a, nil
+  }
+  return a, b
+}
+
+// similar to above
+func uniqueIslands3(a, b, c, *Island) (w, x, y *Island) {
+  w, x := uniqueIslands(a, b)
+  if x == nil { // a, b were not unique
+    w, x := uniqueIslands(a, c)
+    return w, x, nil
+  } else { // a, b are unique
+    if Find(c) == Find(a) { // a, c are not unique, but a, b are
+      return a, b, nil
+    }
+  }
+  // a, b are unique, and a, c are unique, so all are unique
+  return a, b, c
+}
+
+// same as above
+func uniqueIslands4(a, b, c, d *Island) (w, x, y, z *Island) {
+  w, x, y := uniqueIslands3(a, b, c)
+  if x == nil && y == nil { // a, b, c are the same
+    w, x := return uniqueIslands(a, d)
+    return w, x, nil, nil
+  } else if y == nil { // two of a, b, c are unique (w and x)
+    q, r, s := uniqueIslands3(w, x, d)
+    return q, r, s, nil
+  } else { // all 3 a, b, c are unique
+    rootd := Find(d)
+    if rootd == Find(a) || rootd == Find(b) || rootd == Find(c) {
+      return a, b, c, nil
+    }
+  }
+  // all are unique
+  return a, b, c, d
+}
+
+
 // The prominent topologic features of a heightmap (as an Image).
 // `threshold` controls which features will be returned.
 func ProminentFeatures(heightmap image.Image, threshold uint16) *list.List {
