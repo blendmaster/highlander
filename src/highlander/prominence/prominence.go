@@ -11,6 +11,7 @@ import (
 	"image"
 	"image/color"
 	"sort"
+  "log"
 )
 
 // I really don't get go's sorting API
@@ -71,13 +72,19 @@ func gth(a *Feature, b *Feature) bool {
 // The prominent topologic features of a heightmap (as an Image).
 // `threshold` controls which features will be returned.
 func ProminentFeatures(heightmap image.Image, threshold uint16) *list.List {
+  log.Println("sorting pixels")
 	pixels := pixelsOf(heightmap)
+  log.Println("pixels sorted!")
 
 	aboveWater := make(map[Location]*Island)
 
 	features := list.New()
 
-	for _, p := range pixels {
+	for i, p := range pixels {
+    if i % 1000000 == 0 {
+      log.Println("on pixel", i)
+    }
+
 		island := NewIsland()
 		aboveWater[Location{p.X, p.Y}] = island
 
@@ -148,6 +155,8 @@ func ProminentFeatures(heightmap image.Image, threshold uint16) *list.List {
 			features.PushBack(saddle)
 		}
 	}
+
+  log.Println("All features found, thresholding...")
 
 	thresholded := list.New()
 	// filter out features not meeting the threshold
