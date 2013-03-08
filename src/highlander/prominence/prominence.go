@@ -69,6 +69,43 @@ func gth(a *Feature, b *Feature) bool {
 	return a.Y < b.Y
 }
 
+// up to 4 non-nil pointers depending on which islands are not nil. only the
+// first n pointers returned will be non-nil (no gaps), e.g. not (a nil c d)
+// but (a c d nil)
+func nonNilIslands(a, b, c, d *Island) (w, x, y, z *Island) {
+  if a != nil {
+    if b != nil {
+      if c != nil {
+        return a, b, c, d
+      } else {
+        return a, b, d, nil
+      }
+    } else {
+      if c != nil {
+        return a, c, d, nil
+      } else {
+        return a, d, nil, nil
+      }
+    }
+  } else {
+    if b != nil {
+      if c != nil {
+        return b, c, d, nil
+      } else {
+        return b, d, nil, nil
+      }
+    } else {
+      if c != nil {
+        return c, d, nil, nil
+      } else {
+        return d, nil, nil, nil
+      }
+    }
+  }
+  // shouldn't be reached
+  return a, b, c, d
+}
+
 // The prominent topologic features of a heightmap (as an Image).
 // `threshold` controls which features will be returned.
 func ProminentFeatures(heightmap image.Image, threshold uint16) *list.List {
