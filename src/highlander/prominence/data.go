@@ -1,6 +1,8 @@
 // data structures
 package prominence
 
+import "fmt"
+
 type FeatureType int
 
 const (
@@ -15,6 +17,12 @@ type Feature struct {
 	Height     uint16
 	Type       FeatureType
 }
+
+// output feature as a (lite) csv
+func (f *Feature) String() string {
+  return fmt.Sprintf("%v, %v, %v, %v, %v", f.X, f.Y, f.Prominence, f.Height, f.Type)
+}
+
 
 // Each height reading from the input image
 type Pixel struct {
