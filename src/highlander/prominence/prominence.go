@@ -138,7 +138,7 @@ func uniqueIslands4(a, b, c, d *Island) (_, _, _, _ *Island) {
 func outputPeak(peak *Feature, saddleHeight, threshold uint16) {
   prominence := peak.Height - saddleHeight
   if prominence > threshold {
-    fmt.Printf("%v, %v, %v, %v, %v",
+    fmt.Printf("%v, %v, %v, %v, %v\n",
       peak.X,
       peak.Y,
       prominence,
@@ -222,19 +222,20 @@ func PrintProminentFeatures(heightmap image.Image, threshold uint16) {
       //2 connected islands, a and b
       highest, secondHighest := sort2(a, b)
 
-      if a.HighestPeak.Height < highest {
-        outputPeak(a.HighestPeak, p.Height, threshold)
-      } else {
+      if a.HighestPeak.Height == highest {
         outputPeak(b.HighestPeak, p.Height, threshold)
+        Union(b, a)
+        aboveWater[Location{p.X, p.Y}] = a
+      } else {
+        outputPeak(a.HighestPeak, p.Height, threshold)
+        Union(a, b)
+        aboveWater[Location{p.X, p.Y}] = b
       }
-
-      Union(b, a)
-      aboveWater[Location{p.X, p.Y}] = a
 
       prominence := secondHighest - p.Height
       // output saddle
       if prominence > threshold {
-        fmt.Printf("%v, %v, %v, %v, %v", p.X, p.Y, prominence, p.Height, Saddle)
+        fmt.Printf("%v, %v, %v, %v, %v\n", p.X, p.Y, prominence, p.Height, Saddle)
       }
     case d == nil:
       //3 connected islands, a and b and c
@@ -244,24 +245,31 @@ func PrintProminentFeatures(heightmap image.Image, threshold uint16) {
       case a.HighestPeak.Height:
         outputPeak(b.HighestPeak, p.Height, threshold)
         outputPeak(c.HighestPeak, p.Height, threshold)
+        Union(b, a)
+        Union(c, a)
+        aboveWater[Location{p.X, p.Y}] = a
       case b.HighestPeak.Height:
         outputPeak(a.HighestPeak, p.Height, threshold)
         outputPeak(c.HighestPeak, p.Height, threshold)
+        Union(a, b)
+        Union(c, b)
+        aboveWater[Location{p.X, p.Y}] = b
       case c.HighestPeak.Height:
         outputPeak(a.HighestPeak, p.Height, threshold)
         outputPeak(b.HighestPeak, p.Height, threshold)
+        Union(a, c)
+        Union(b, c)
+        aboveWater[Location{p.X, p.Y}] = c
       }
-
-      Union(b, a)
-      Union(c, a)
-      aboveWater[Location{p.X, p.Y}] = a
 
       prominence := secondHighest - p.Height
       // output saddle
       if prominence > threshold {
-        fmt.Printf("%v, %v, %v, %v, %v", p.X, p.Y, prominence, p.Height, Saddle)
+        fmt.Printf("%v, %v, %v, %v, %v\n", p.X, p.Y, prominence, p.Height, Saddle)
       }
     default:
+      log.Println("on pixel", p)
+      log.Println("saddle", a, b, c, d)
       // a, b, c, d all connected
       highest, secondHighest := sort4(a, b, c, d)
 
@@ -270,29 +278,40 @@ func PrintProminentFeatures(heightmap image.Image, threshold uint16) {
         outputPeak(b.HighestPeak, p.Height, threshold)
         outputPeak(c.HighestPeak, p.Height, threshold)
         outputPeak(d.HighestPeak, p.Height, threshold)
+        Union(b, a)
+        Union(c, a)
+        Union(d, a)
+        aboveWater[Location{p.X, p.Y}] = a
       case b.HighestPeak.Height:
         outputPeak(a.HighestPeak, p.Height, threshold)
         outputPeak(c.HighestPeak, p.Height, threshold)
         outputPeak(d.HighestPeak, p.Height, threshold)
+        Union(a, b)
+        Union(c, b)
+        Union(d, b)
+        aboveWater[Location{p.X, p.Y}] = b
       case c.HighestPeak.Height:
         outputPeak(a.HighestPeak, p.Height, threshold)
         outputPeak(b.HighestPeak, p.Height, threshold)
         outputPeak(d.HighestPeak, p.Height, threshold)
+        Union(a, c)
+        Union(b, c)
+        Union(d, c)
+        aboveWater[Location{p.X, p.Y}] = c
       case d.HighestPeak.Height:
         outputPeak(a.HighestPeak, p.Height, threshold)
         outputPeak(b.HighestPeak, p.Height, threshold)
         outputPeak(c.HighestPeak, p.Height, threshold)
+        Union(a, d)
+        Union(b, d)
+        Union(c, d)
+        aboveWater[Location{p.X, p.Y}] = d
       }
-
-      Union(b, a)
-      Union(c, a)
-      Union(d, a)
-      aboveWater[Location{p.X, p.Y}] = a
 
       prominence := secondHighest - p.Height
       // output saddle
       if prominence > threshold {
-        fmt.Printf("%v, %v, %v, %v, %v", p.X, p.Y, prominence, p.Height, Saddle)
+        fmt.Printf("%v, %v, %v, %v, %v\n", p.X, p.Y, prominence, p.Height, Saddle)
       }
 		}
 	}
