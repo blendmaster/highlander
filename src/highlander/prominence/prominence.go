@@ -11,6 +11,7 @@ import (
 	"image/color"
 	"sort"
   "log"
+  "fmt"
 )
 
 // I really don't get go's sorting API
@@ -68,45 +69,17 @@ func gth(a *Feature, b *Feature) bool {
 	return a.Y < b.Y
 }
 
-// up to 4 non-nil pointers depending on which islands are not nil. only the
-// first n pointers returned will be non-nil (no gaps), e.g. not (a nil c d)
-// but (a c d nil)
-func nonNilIslands(a, b, c, d *Island) (w, x, y, z *Island) {
-  if a != nil {
-    if b != nil {
-      if c != nil {
-        return a, b, c, d
-      } else {
-        return a, b, d, nil
-      }
-    } else {
-      if c != nil {
-        return a, c, d, nil
-      } else {
-        return a, d, nil, nil
-      }
-    }
-  } else {
-    if b != nil {
-      if c != nil {
-        return b, c, d, nil
-      } else {
-        return b, d, nil, nil
-      }
-    } else {
-      if c != nil {
-        return c, d, nil, nil
-      } else {
-        return d, nil, nil, nil
-      }
-    }
-  }
-  // shouldn't be reached
-  return a, b, c, d
-}
-
-// a, nil if a and b are the same land mass. a, b MUST be non-nil
+// up to 2 unique pointers if a and b are unique
 func uniqueIslands(a, b *Island) (w, x *Island) {
+  if a == nil && b == nil {
+    return nil, nil
+  }
+  if a != nil && b == nil {
+    return a, nil
+  }
+  if a == nil && b != nil {
+    return b, nil
+  }
   if Find(a) == Find(b) {
     return a, nil
   }
@@ -114,39 +87,100 @@ func uniqueIslands(a, b *Island) (w, x *Island) {
 }
 
 // similar to above
-func uniqueIslands3(a, b, c, *Island) (w, x, y *Island) {
+func uniqueIslands3(a, b, c *Island) (_, _, _ *Island) {
   w, x := uniqueIslands(a, b)
-  if x == nil { // a, b were not unique
-    w, x := uniqueIslands(a, c)
-    return w, x, nil
-  } else { // a, b are unique
-    if Find(c) == Find(a) { // a, c are not unique, but a, b are
-      return a, b, nil
-    }
+  if w == nil { // a,b, are null
+    return c, nil, nil
   }
-  // a, b are unique, and a, c are unique, so all are unique
+  if x == nil { // w is not null
+    y, z := uniqueIslands(w, c)
+    return y, z, nil
+  }
+  // a, b are non, nil and unique
+  if c == nil {
+    return a, b, nil
+  }
+  rootc := Find(c)
+  if rootc == Find(a) || rootc == Find(b) {
+    return a, b, nil
+  }
   return a, b, c
 }
 
 // same as above
-func uniqueIslands4(a, b, c, d *Island) (w, x, y, z *Island) {
+func uniqueIslands4(a, b, c, d *Island) (_, _, _, _ *Island) {
   w, x, y := uniqueIslands3(a, b, c)
-  if x == nil && y == nil { // a, b, c are the same
-    w, x := return uniqueIslands(a, d)
-    return w, x, nil, nil
-  } else if y == nil { // two of a, b, c are unique (w and x)
-    q, r, s := uniqueIslands3(w, x, d)
-    return q, r, s, nil
-  } else { // all 3 a, b, c are unique
-    rootd := Find(d)
-    if rootd == Find(a) || rootd == Find(b) || rootd == Find(c) {
-      return a, b, c, nil
-    }
+  if w == nil { // a, b, c are nil
+    return d, nil, nil, nil
   }
+  if x == nil { // w is not nil
+    p, q := uniqueIslands(w, d)
+    return p, q, nil, nil
+  }
+  if y == nil { // w, x are not nil
+    p, q, r := uniqueIslands3(w, x, d)
+    return p, q, r, nil
+  }
+  // a, b, c are all not nil
+  if d == nil {
+    return a, b, c, nil
+  }
+  rootd := Find(d)
+  if rootd == Find(a) || rootd == Find(b) || rootd == Find(c) {
+    return a, b, c, nil
+  }
+
   // all are unique
   return a, b, c, d
 }
 
+// output a peak whose island joined at a saddle
+func outputPeak(peak *Feature, saddleHeight, threshold uint16) {
+  prominence := peak.Height - saddleHeight
+  if prominence > threshold {
+    fmt.Printf("%v, %v, %v, %v, %v",
+      peak.X,
+      peak.Y,
+      prominence,
+      peak.Height,
+      Peak)
+  }
+}
+
+func sort2(a, b *Island) (highest, secondHighest uint16) {
+  if gth(a.HighestPeak, b.HighestPeak) {
+    return a.HighestPeak.Height, b.HighestPeak.Height
+  }
+  // b is highest
+  return b.HighestPeak.Height, a.HighestPeak.Height
+}
+
+func sort3(a, b, c *Island) (highest, secondHighest uint16) {
+  abh, abs := sort2(a, b)
+
+  cheight := c.HighestPeak.Height
+  
+  if cheight > abh {
+    return cheight, abh
+  }
+  if cheight > abs {
+    return abh, cheight
+  }
+  return abh, abs
+}
+
+func sort4(a, b, c, d *Island) (highest, secondHighest uint16) {
+  abch, abcs := sort3(a, b, c)
+
+  dheight := d.HighestPeak.Height
+  if dheight > abch {
+    return dheight, abch
+  }
+  if dheight > abcs {
+    return abch, dheight
+  }
+  return abch, abcs
+}
 
 // The prominent topologic features of a heightmap (as an Image).
 // `threshold` controls which features will be returned.
@@ -160,7 +194,7 @@ func PrintProminentFeatures(heightmap image.Image, threshold uint16) {
   // since the list of features isn't stored but println'd when the prominence
   // is determined, output the absolute highest feature now, since its
   // prominence never changes
-  fmt.Println(&Feature{pixels[0].X, pixels[0].Y, 65535, pixels[0].Height, Peak})
+  outputPeak(&Feature{pixels[0].X, pixels[0].Y, 65535, pixels[0].Height, Peak}, 0, threshold)
 
 	for i, p := range pixels {
     if i % 1000000 == 0 {
@@ -168,73 +202,97 @@ func PrintProminentFeatures(heightmap image.Image, threshold uint16) {
     }
 
 		// lookup 4 connected pixels
-		n, foundN := aboveWater[Location{p.X, p.Y - 1}]
-		e, foundE := aboveWater[Location{p.X + 1, p.Y}]
-		s, foundS := aboveWater[Location{p.X, p.Y + 1}]
-		w, foundW := aboveWater[Location{p.X - 1, p.Y}]
+		n := aboveWater[Location{p.X, p.Y - 1}]
+		e := aboveWater[Location{p.X + 1, p.Y}]
+		s := aboveWater[Location{p.X, p.Y + 1}]
+		w := aboveWater[Location{p.X - 1, p.Y}]
 
-		// set of connected islands
-		connected := make(map[*Island]bool)
+    a, b, c, d := uniqueIslands4(n, e, s, w)
 
-		if foundN {
-			connected[Find(n)] = true
-		}
-		if foundE {
-			connected[Find(e)] = true
-		}
-		if foundS {
-			connected[Find(s)] = true
-		}
-		if foundW {
-			connected[Find(w)] = true
-		}
-
-		switch len(connected) {
-		case 0:
+		switch {
+		case a == nil:
 			// new Peak
       island := NewIsland()
       aboveWater[Location{p.X, p.Y}] = island
 			island.HighestPeak = &Feature{p.X, p.Y, 65535, p.Height, Peak}
-		case 1:
+		case b == nil:
 			// simple merge, loop only runs once
-			for land := range connected {
-        aboveWater[Location{p.X, p.Y}] = land
-			}
-		default:
-			// 2 or more unconnected islands
-			// saddle creation
-			saddle := &Feature{p.X, p.Y, 65535, p.Height, Saddle}
-			var highest, secondHighest *Feature
-			var highestLand *Island
+      aboveWater[Location{p.X, p.Y}] = a
+    case c == nil:
+      //2 connected islands, a and b
+      highest, secondHighest := sort2(a, b)
 
-			for land := range connected {
-				if secondHighest == nil || land.HighestPeak.Height > secondHighest.Height {
-					secondHighest = land.HighestPeak
-				}
-				if highest == nil || land.HighestPeak.Height > highest.Height {
-					highestLand = land
-					secondHighest = highest
-					highest = land.HighestPeak
-				}
-			}
+      if a.HighestPeak.Height < highest {
+        outputPeak(a.HighestPeak, p.Height, threshold)
+      } else {
+        outputPeak(b.HighestPeak, p.Height, threshold)
+      }
 
-			saddle.Prominence = secondHighest.Height - p.Height
+      Union(b, a)
+      aboveWater[Location{p.X, p.Y}] = a
 
-			// update prominences, and union
-			for land := range connected {
-				if land.HighestPeak != highest {
-					land.HighestPeak.Prominence = land.HighestPeak.Height - p.Height
-          if land.HighestPeak.Prominence > threshold {
-            fmt.Println(land.HighestPeak)
-          }
-					Union(land, highestLand)
-				}
-			}
+      prominence := secondHighest - p.Height
+      // output saddle
+      if prominence > threshold {
+        fmt.Printf("%v, %v, %v, %v, %v", p.X, p.Y, prominence, p.Height, Saddle)
+      }
+    case d == nil:
+      //3 connected islands, a and b and c
+      highest, secondHighest := sort3(a, b, c)
 
-      aboveWater[Location{p.X, p.Y}] = highestLand
+      switch (highest) {
+      case a.HighestPeak.Height:
+        outputPeak(b.HighestPeak, p.Height, threshold)
+        outputPeak(c.HighestPeak, p.Height, threshold)
+      case b.HighestPeak.Height:
+        outputPeak(a.HighestPeak, p.Height, threshold)
+        outputPeak(c.HighestPeak, p.Height, threshold)
+      case c.HighestPeak.Height:
+        outputPeak(a.HighestPeak, p.Height, threshold)
+        outputPeak(b.HighestPeak, p.Height, threshold)
+      }
 
-      if saddle.Prominence > threshold {
-        fmt.Println(saddle)
+      Union(b, a)
+      Union(c, a)
+      aboveWater[Location{p.X, p.Y}] = a
+
+      prominence := secondHighest - p.Height
+      // output saddle
+      if prominence > threshold {
+        fmt.Printf("%v, %v, %v, %v, %v", p.X, p.Y, prominence, p.Height, Saddle)
+      }
+    default:
+      // a, b, c, d all connected
+      highest, secondHighest := sort4(a, b, c, d)
+
+      switch (highest) {
+      case a.HighestPeak.Height:
+        outputPeak(b.HighestPeak, p.Height, threshold)
+        outputPeak(c.HighestPeak, p.Height, threshold)
+        outputPeak(d.HighestPeak, p.Height, threshold)
+      case b.HighestPeak.Height:
+        outputPeak(a.HighestPeak, p.Height, threshold)
+        outputPeak(c.HighestPeak, p.Height, threshold)
+        outputPeak(d.HighestPeak, p.Height, threshold)
+      case c.HighestPeak.Height:
+        outputPeak(a.HighestPeak, p.Height, threshold)
+        outputPeak(b.HighestPeak, p.Height, threshold)
+        outputPeak(d.HighestPeak, p.Height, threshold)
+      case d.HighestPeak.Height:
+        outputPeak(a.HighestPeak, p.Height, threshold)
+        outputPeak(b.HighestPeak, p.Height, threshold)
+        outputPeak(c.HighestPeak, p.Height, threshold)
+      }
+
+      Union(b, a)
+      Union(c, a)
+      Union(d, a)
+      aboveWater[Location{p.X, p.Y}] = a
+
+      prominence := secondHighest - p.Height
+      // output saddle
+      if prominence > threshold {
+        fmt.Printf("%v, %v, %v, %v, %v", p.X, p.Y, prominence, p.Height, Saddle)
       }
 		}
 	}
