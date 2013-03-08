@@ -7,11 +7,11 @@
 package prominence
 
 import (
+	"fmt"
 	"image"
 	"image/color"
+	"log"
 	"sort"
-  "log"
-  "fmt"
 )
 
 // I really don't get go's sorting API
@@ -72,21 +72,21 @@ func gth(a *Feature, b *Feature) bool {
 // Print the prominent topologic features of a heightmap (as an Image).
 // `threshold` controls which features will be returned.
 func PrintProminentFeatures(heightmap image.Image, threshold uint16) {
-  log.Println("sorting pixels")
+	log.Println("sorting pixels")
 	pixels := pixelsOf(heightmap)
-  log.Println("pixels sorted!")
+	log.Println("pixels sorted!")
 
 	aboveWater := make(map[Location]*Island)
 
-  // since the list of features isn't stored but println'd when the prominence
-  // is determined, output the absolute highest feature now, since its
-  // prominence never changes
-  fmt.Println(&Feature{pixels[0].X, pixels[0].Y, 65535, pixels[0].Height, Peak})
+	// since the list of features isn't stored but println'd when the prominence
+	// is determined, output the absolute highest feature now, since its
+	// prominence never changes
+	fmt.Println(&Feature{pixels[0].X, pixels[0].Y, 65535, pixels[0].Height, Peak})
 
 	for i, p := range pixels {
-    if i % 1000000 == 0 {
-      log.Println("on pixel", i)
-    }
+		if i%1000000 == 0 {
+			log.Println("on pixel", i)
+		}
 
 		// lookup 4 connected pixels
 		n, foundN := aboveWater[Location{p.X, p.Y - 1}]
@@ -113,13 +113,13 @@ func PrintProminentFeatures(heightmap image.Image, threshold uint16) {
 		switch len(connected) {
 		case 0:
 			// new Peak
-      island := NewIsland()
-      aboveWater[Location{p.X, p.Y}] = island
+			island := NewIsland()
+			aboveWater[Location{p.X, p.Y}] = island
 			island.HighestPeak = &Feature{p.X, p.Y, 65535, p.Height, Peak}
 		case 1:
 			// simple merge, loop only runs once
 			for land := range connected {
-        aboveWater[Location{p.X, p.Y}] = land
+				aboveWater[Location{p.X, p.Y}] = land
 			}
 		default:
 			// 2 or more unconnected islands
@@ -145,20 +145,20 @@ func PrintProminentFeatures(heightmap image.Image, threshold uint16) {
 			for land := range connected {
 				if land.HighestPeak != highest {
 					land.HighestPeak.Prominence = land.HighestPeak.Height - p.Height
-          if land.HighestPeak.Prominence > threshold {
-            fmt.Println(land.HighestPeak)
-          }
+					if land.HighestPeak.Prominence > threshold {
+						fmt.Println(land.HighestPeak)
+					}
 					Union(land, highestLand)
 				}
 			}
 
-      aboveWater[Location{p.X, p.Y}] = highestLand
+			aboveWater[Location{p.X, p.Y}] = highestLand
 
-      if saddle.Prominence > threshold {
-        fmt.Println(saddle)
-      }
+			if saddle.Prominence > threshold {
+				fmt.Println(saddle)
+			}
 		}
 	}
 
-  log.Println("All features found!")
+	log.Println("All features found!")
 }
